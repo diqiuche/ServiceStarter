@@ -1,6 +1,7 @@
 ﻿using ServiceStarter.Common;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.ServiceProcess;
@@ -75,7 +76,12 @@ namespace ServiceStarter
                     default:
                         try
                         {
-                            Assembly asm = Assembly.LoadFrom(assemblyName + ".dll");
+                            var location = System.Reflection.Assembly.GetEntryAssembly().Location;
+                            var directoryPath = Path.GetDirectoryName(location);
+
+                            var asmFile = Path.Combine(directoryPath, assemblyName + ".dll");
+
+                            Assembly asm = Assembly.LoadFrom(asmFile);
 
                             if (null == asm)
                             {

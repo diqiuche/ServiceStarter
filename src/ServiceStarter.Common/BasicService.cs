@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.ServiceProcess;
@@ -58,9 +59,14 @@ namespace ServiceStarter.Common
             m_TypeAssemblyName = assemblyName;
             m_TypeName = typeName;
 
+            var location = System.Reflection.Assembly.GetEntryAssembly().Location;
+            var directoryPath = Path.GetDirectoryName(location);
+
+            var asmFile = Path.Combine(directoryPath, assemblyName + ".dll");
+
             try
             {
-                m_TypeAssembly = Assembly.LoadFrom(m_TypeAssemblyName + ".dll");
+                m_TypeAssembly = Assembly.LoadFrom(asmFile);
             }
             catch (Exception eX)
             {
@@ -70,7 +76,7 @@ namespace ServiceStarter.Common
 
             try
             {
-                m_ServiceType = m_TypeAssembly.GetType(m_TypeName, true, true);
+                m_ServiceType = m_TypeAssembly.GetType(assemblyName + "." + m_TypeName, true, true);
             }
             catch (Exception eX)
             {
@@ -80,7 +86,7 @@ namespace ServiceStarter.Common
 
             if (!typeof(IService).IsAssignableFrom(m_ServiceType))
             {
-                string.Format("要启动的服务：{0}，不是继承于IService的服务，无法启动", m_TypeName).WriteErrorEvent(10002);
+                string.Format("要启动的服务：{0}，不是继承于IService的服务，无法启动", assemblyName + "." + m_TypeName).WriteErrorEvent(10002);
             }
         }
 
