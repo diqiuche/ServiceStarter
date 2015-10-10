@@ -1,9 +1,12 @@
-﻿using ServiceStarter.Common;
+﻿using log4net;
+using ServiceStarter.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security;
+using System.Security.Policy;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,112 +15,90 @@ namespace ServiceStarter
 {
     public static class BasicServiceStarter
     {
-        public static void Run<T>(string displayName, string serviceName) where T : IService
+        public static void Run(string[] args)
         {
-            if (Environment.UserInteractive)
-            {
-                var cmd = (Environment.GetCommandLineArgs().Skip(1).FirstOrDefault() ?? "").ToLower();
+            ServiceInfoElement config = ServiceContext.Current.ServiceInfo;
 
-                switch (cmd)
-                {
-                    case "i":
-                    case "install":
-                        Console.WriteLine("安装服务：{0}:{1}", displayName, serviceName);
-                        BasicServiceInstaller.Install(displayName, serviceName);
-                        break;
-                    case "u":
-                    case "uninstall":
-                        Console.WriteLine("卸载服务：{0}:{1}", displayName, serviceName);
-                        BasicServiceInstaller.Uninstall(displayName, serviceName);
-                        break;
-                    default:
+            var cmd = 0 != args.Length ? args[0] : "";
+
+            switch (cmd)
+            {
+                case "i":
+                case "install":
+                    string.Format("安装服务：{0}:{1}", ServiceContext.Current.ServiceInfo.DisplayName,
+                        ServiceContext.Current.ServiceInfo.ServiceName).Info();
+                    BasicServiceInstaller.Install(ServiceContext.Current.ServiceInfo.DisplayName,
+                        ServiceContext.Current.ServiceInfo.ServiceName);
+                    break;
+                case "u":
+                case "uninstall":
+                    string.Format("卸载服务：{0}:{1}", ServiceContext.Current.ServiceInfo.DisplayName,
+                        ServiceContext.Current.ServiceInfo.ServiceName).Info();
+                    BasicServiceInstaller.Uninstall(ServiceContext.Current.ServiceInfo.DisplayName,
+                        ServiceContext.Current.ServiceInfo.ServiceName);
+                    break;
+                default:
+                    if (null != ServiceContext.Current.ServiceInfo)
+                    {
+                        string.Format("服务正在使用 {0} 模式运行。", Environment.UserInteractive ? "交互" : "服务").Info();
+
+                        string.Format("发现服务配置。共配置了：{0} 项服务", ServiceContext.Current.ServiceStarters.Count).Info();
                         try
                         {
-                            using (var service = (IService)Activator.CreateInstance(typeof(T)))
+                            foreach (ServiceStarterElement eleConfig in ServiceContext.Current.ServiceStarters)
                             {
+                                string.Format("启动位于 {0} 位置的 {1} 服务，并启动实例： {2}", eleConfig.ContentPath, eleConfig.Name, eleConfig.TypeName)
+                                    .Info();
+                                AppDomainSetup oSetup = new AppDomainSetup();
+                                oSetup.ApplicationName = eleConfig.Name;
+                                oSetup.ApplicationBase = Path.IsPathRooted(eleConfig.ContentPath) ? eleConfig.ContentPath :
+                                    Path.Combine(ServiceContext.Current.Location,
+                                    ServiceContext.Current.ServiceInfo.ServicePaths["services"].Value,
+                                    eleConfig.ContentPath);
+                                //oSetup.PrivateBinPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "private");
+                                oSetup.CachePath = Path.Combine(ServiceContext.Current.Location,
+                                    ServiceContext.Current.ServiceInfo.ServicePaths["cache"].Value);
+                                oSetup.ShadowCopyFiles = "true"; //启用影像复制程序集
+                                oSetup.ShadowCopyDirectories = oSetup.ApplicationBase;
+                                oSetup.ConfigurationFile = Path.Combine(oSetup.ApplicationBase, "service.config");
+                                oSetup.PrivateBinPath = oSetup.ApplicationBase;
+
+                                string.Format("基础路径：{0}", oSetup.ApplicationBase).Info();
+                                string.Format("BIN路径：{0}", oSetup.PrivateBinPath).Info();
+                                string.Format("镜像路径：{0}", oSetup.ShadowCopyDirectories).Info();
+                                string.Format("缓存路径：{0}", oSetup.CachePath).Info();
+                                string.Format("配置文件：{0}", oSetup.ConfigurationFile).Info();
+
+                                EvidenceBase[] hostEvidence = { new Zone(SecurityZone.MyComputer) };
+                                Evidence e = new Evidence(hostEvidence, null);
+
+                                AppDomain newDomain = AppDomain.CreateDomain(eleConfig.Name,
+                                    e, //AppDomain.CurrentDomain.Evidence,
+                                    oSetup);
+
+                                IService service = newDomain.CreateInstanceAndUnwrap(eleConfig.AssemblyName, eleConfig.TypeName) as IService;
+
                                 service.Start();
-                                string.Format("服务：{0} 开始运行，按任意键停止", displayName).WriteInfo();
-                                Console.ReadLine();
+
+                                ServiceContext.Current.Domains.Add(eleConfig.Name, newDomain);
                             }
                         }
                         catch (Exception eX)
                         {
-                            eX.WriteException();
-                            "按任意键终止程序".WriteInfo();
+                            eX.Exception();
+                        }
+                    }
+                    else
+                    {
+                        "找不到服务配置信息，启动失败。".Error();
+
+                        if (Environment.UserInteractive)
+                        {
+                            "按任意键关闭程序".Info();
                             Console.ReadLine();
                         }
-                        break;
-                }
-            }
-            else
-            {
-                ServiceBase.Run(new BasicService<T>() { ServiceName = serviceName });
-            }
-        }
-
-        public static void Run(string assemblyName, string typeName, string displayName, string serviceName)
-        {
-            if (Environment.UserInteractive)
-            {
-                var cmd = (Environment.GetCommandLineArgs().Skip(1).FirstOrDefault() ?? "").ToLower();
-
-                switch (cmd)
-                {
-                    case "i":
-                    case "install":
-                        Console.WriteLine("安装服务：{0}:{1}", displayName, serviceName);
-                        BasicServiceInstaller.Install(displayName, serviceName);
-                        break;
-                    case "u":
-                    case "uninstall":
-                        Console.WriteLine("卸载服务：{0}:{1}", displayName, serviceName);
-                        BasicServiceInstaller.Uninstall(displayName, serviceName);
-                        break;
-                    default:
-                        try
-                        {
-                            var location = System.Reflection.Assembly.GetEntryAssembly().Location;
-                            var directoryPath = Path.GetDirectoryName(location);
-
-                            var asmFile = Path.Combine(directoryPath, assemblyName + ".dll");
-
-                            Assembly asm = Assembly.LoadFrom(asmFile);
-
-                            if (null == asm)
-                            {
-                                string.Format("无法加载服务组件：{0}", assemblyName + ".dll").WriteWarningInfo();
-                            }
-                            else
-                            {
-                                Type srvType = asm.GetType(assemblyName + "." + typeName, true, true);
-
-                                if (null == srvType)
-                                {
-                                    string.Format("无法找到服务类型：{0}" + assemblyName + "." + typeName).WriteWarningInfo();
-                                }
-                                else
-                                {
-                                    using (var service = (IService)Activator.CreateInstance(srvType))
-                                    {
-                                        service.Start();
-                                        string.Format("服务：{0} 开始运行，按任意键停止", displayName).WriteInfo();
-                                        Console.ReadLine();
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception eX)
-                        {
-                            eX.WriteException();
-                            "按任意键终止程序".WriteInfo();
-                            Console.ReadLine();
-                        }
-                        break;
-                }
-            }
-            else
-            {
-                ServiceBase.Run(new BasicService(assemblyName, typeName) { ServiceName = serviceName });
+                    }
+                    break;
             }
         }
     }

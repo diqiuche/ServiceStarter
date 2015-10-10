@@ -9,16 +9,16 @@ namespace ServiceStarter.Common
 {
     public class ServiceStarterSection : ConfigurationSection
     {
-        [ConfigurationProperty("default", IsRequired = true)]
-        public string Default
+        [ConfigurationProperty("serviceInfo", IsRequired = true)]
+        public ServiceInfoElement ServiceInfo
         {
             get
             {
-                return (string)base["default"];
+                return (ServiceInfoElement)base["serviceInfo"];
             }
             set
             {
-                base["default"] = value;
+                base["serviceInfo"] = value;
             }
         }
 

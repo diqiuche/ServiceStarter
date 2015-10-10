@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,68 +11,40 @@ namespace ServiceStarter
 {
     class Program
     {
+        [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
+        [STAThread]
         static void Main(string[] args)
         {
-            ServiceStarterSection configs = (ServiceStarterSection)ConfigurationManager.GetSection("serviceStarters");
+            var cmd = (Environment.GetCommandLineArgs().Skip(1).FirstOrDefault() ?? "").ToLower();
 
-            if (null != configs)
+            log4net.Config.XmlConfigurator.Configure();
+
+            if (Environment.UserInteractive)
             {
-                if (Environment.UserInteractive)
-                {
-                    string.Format("发现服务配置。共配置了：{0}项服务", configs.Services.Count).WriteInfo();
-                }
+                BasicServiceStarter.Run(new string[] { cmd });
 
-                ServiceStarterElement defaultElement = null;
+                "服务启动完毕，按任意键可以退出".Info();
 
-                foreach (ServiceStarterElement ele in configs.Services)
-                {
-                    if (Environment.UserInteractive)
-                    {
-                        string.Format(
-                            "配置：{0}，服务：{1} : {4}，服务组件：{2}.{3}",
-                            ele.Name, ele.DisplayName, ele.AssemlyName, ele.TypeName, ele.ServiceName).WriteActionInfo();
-                    }
-                    if (ele.Name == configs.Default)
-                    {
-                        defaultElement = ele;
-                    }
-                }
+                Console.ReadLine();
 
-                if (null != defaultElement)
-                {
-                    if (Environment.UserInteractive)
-                    {
-                        string.Format(
-                            "使用配置：{0}", configs.Default).WriteActionInfo();
-                    }
+                string.Format("需要停止 {0} 个服务", ServiceContext.Current.Domains.Count).Info();
 
-                    BasicServiceStarter.Run(defaultElement.AssemlyName, defaultElement.TypeName,
-                        defaultElement.DisplayName, defaultElement.ServiceName);
-                }
-                else
+                if (0 != ServiceContext.Current.Domains.Count)
                 {
-                    if (Environment.UserInteractive)
+                    foreach (KeyValuePair<string, AppDomain> appPair in ServiceContext.Current.Domains)
                     {
-                        string.Format("找不到配置{0}的服务信息", configs.Default).WriteWarningInfo();
-                        Console.ReadLine();
-                    }
-                    else
-                    {
-                        string.Format("找不到配置{0}的服务信息", configs.Default).WriteErrorEvent(20001);
+                        string.Format("正在停止服务：{0}", appPair.Key).Info();
+                        AppDomain.Unload(appPair.Value);
+                        string.Format("服务：{0} 已经被停止", appPair.Key).Info();
                     }
                 }
             }
             else
             {
-                if (Environment.UserInteractive)
+                ServiceBase.Run(new WindowsService()
                 {
-                    "找不到服务配置信息，启动失败。按任意键关闭程序".WriteWarningInfo();
-                    Console.ReadLine();
-                }
-                else
-                {
-                    "找不到服务配置信息，启动失败。".WriteErrorEvent(20002);
-                }
+                    ServiceName = ServiceContext.Current.ServiceInfo.DisplayName
+                });
             }
         }
     }

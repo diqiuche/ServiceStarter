@@ -27,7 +27,7 @@ namespace ServiceStarter.Common
         }
 
         [ConfigurationProperty("assemblyName", IsRequired = true)]
-        public string AssemlyName
+        public string AssemblyName
         {
             get
             {
@@ -46,18 +46,17 @@ namespace ServiceStarter.Common
             set { base["typeName"] = value; }
         }
 
-        [ConfigurationProperty("displayName", IsRequired = false)]
-        public string DisplayName
+        [ConfigurationProperty("contentPath", IsRequired = true)]
+        public string ContentPath
         {
-            get { return (string)base["displayName"]; }
-            set { base["displayName"] = value; }
-        }
-
-        [ConfigurationProperty("serviceName", IsRequired = true)]
-        public string ServiceName
-        {
-            get { return (string)base["serviceName"]; }
-            set { base["serviceName"] = value; }
+            get
+            {
+                return (string)base["contentPath"];
+            }
+            set
+            {
+                base["contentPath"] = value;
+            }
         }
     }
 }
