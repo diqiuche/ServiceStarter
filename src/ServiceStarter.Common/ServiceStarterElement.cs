@@ -58,5 +58,18 @@ namespace ServiceStarter.Common
                 base["contentPath"] = value;
             }
         }
+
+        [ConfigurationProperty("enabled", IsRequired = false, DefaultValue = "true")]
+        public string Enabled
+        {
+            get
+            {
+                return (string)base["enabled"];
+            }
+            set
+            {
+                base["enabled"] = value;
+            }
+        }
     }
 }
