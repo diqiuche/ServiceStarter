@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServiceStarter.Common
+namespace ServiceStarter.Configuration
 {
     public class ServiceStarterElement : ConfigurationElement
     {
@@ -56,6 +56,29 @@ namespace ServiceStarter.Common
             set
             {
                 base["contentPath"] = value;
+            }
+        }
+
+        [ConfigurationProperty("enabled", IsRequired = false, DefaultValue = "true")]
+        public string Enabled
+        {
+            get
+            {
+                return (string)base["enabled"];
+            }
+            set
+            {
+                base["enabled"] = value;
+            }
+        }
+
+        [ConfigurationProperty("dependenceServices", IsRequired = false)]
+        [ConfigurationCollection(typeof(DependenceServiceConfigurationElement), AddItemName = "refService", ClearItemsName = "clear", RemoveItemName = "remove")]
+        public DependenceServiceCollection DependenceServices
+        {
+            get
+            {
+                return (DependenceServiceCollection)base["dependenceServices"];
             }
         }
     }

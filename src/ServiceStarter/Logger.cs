@@ -4,18 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ServiceStarter.Common
+namespace ServiceStarter
 {
     public static class Logger
     {
         static ILog _Log = LogManager.GetLogger("starterLogger");
 
-        public static void Info(this string msg)
+        public static void Info(this string msg, bool showTime = true)
         {
             if (Environment.UserInteractive)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), msg);
+                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
                 Console.ResetColor();
             }
             else
@@ -24,12 +24,12 @@ namespace ServiceStarter.Common
             }
         }
 
-        public static void Debug(this string msg)
+        public static void Debug(this string msg, bool showTime = true)
         {
             if (Environment.UserInteractive)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), msg);
+                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
                 Console.ResetColor();
             }
             else
@@ -38,12 +38,12 @@ namespace ServiceStarter.Common
             }
         }
 
-        public static void Warn(this string msg)
+        public static void Warn(this string msg, bool showTime = true)
         {
             if (Environment.UserInteractive)
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), msg);
+                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
                 Console.ResetColor();
             }
             else
@@ -52,13 +52,12 @@ namespace ServiceStarter.Common
             }
         }
 
-        public static void Error(this string msg)
+        public static void Error(this string msg, bool showTime = true)
         {
             if (Environment.UserInteractive)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "程序发生错误：");
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), msg);
+                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
                 Console.ResetColor();
             }
             else
@@ -67,19 +66,18 @@ namespace ServiceStarter.Common
             }
         }
 
-        public static void Exception(this Exception eX)
+        public static void Exception(this Exception eX, bool showTime = true)
         {
             if (Environment.UserInteractive)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "程序发生错误：");
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), eX.Message);
-                Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), eX.StackTrace);
+                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.Message);
+                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.StackTrace);
                 Exception innerEx = eX.InnerException;
                 while (null != innerEx)
                 {
-                    Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), eX.Message);
-                    Console.WriteLine("{0}\t:{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), eX.StackTrace);
+                    Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.Message);
+                    Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.StackTrace);
 
                     innerEx = innerEx.InnerException;
                 }
