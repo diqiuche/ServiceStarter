@@ -4,10 +4,17 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 
-namespace ServiceStarter.Common
+namespace ServiceStarter.Configuration
 {
     public class ServiceInfoElement : ConfigurationElement
     {
+        [ConfigurationProperty("name", IsRequired = true)]
+        public string Name
+        {
+            get { return (string)base["name"]; }
+            set { base["name"] = value; }
+        }
+
         [ConfigurationProperty("displayName", IsRequired = false)]
         public string DisplayName
         {
@@ -22,19 +29,6 @@ namespace ServiceStarter.Common
             set { base["serviceName"] = value; }
         }
 
-        [ConfigurationProperty("appPath", IsRequired = false, DefaultValue = ".")]
-        public string AppPath
-        {
-            get
-            {
-                return (string)base["appPath"];
-            }
-            set
-            {
-                base["appPath"] = value;
-            }
-        }
-
         [ConfigurationProperty("servicePaths", IsRequired = true)]
         public NameValueConfigurationCollection ServicePaths
         {
@@ -45,6 +39,19 @@ namespace ServiceStarter.Common
             set
             {
                 base["servicePaths"] = value;
+            }
+        }
+
+        [ConfigurationProperty("description", IsRequired = false, DefaultValue = "")]
+        public string Description
+        {
+            get
+            {
+                return (string)base["description"];
+            }
+            set
+            {
+                base["description"] = value;
             }
         }
     }

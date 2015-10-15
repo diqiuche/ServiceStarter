@@ -45,6 +45,8 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -53,10 +55,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionResult.cs" />
+    <Compile Include="BasicServiceInstaller.cs" />
     <Compile Include="BasicServiceStarter.cs" />
+    <Compile Include="FormatExtension.cs" />
+    <Compile Include="IServiceController.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceContext.cs" />
+    <Compile Include="ServiceController.cs" />
+    <Compile Include="ServiceControllerClient.cs" />
+    <Compile Include="ServiceControllerService.cs" />
+    <Compile Include="ServiceSlot.cs" />
     <Compile Include="WindowsService.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -68,9 +79,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\OptionsSharp\OptionsSharp.csproj">
+      <Project>{07d7abd0-a981-46d1-b9d2-cd51959f64ba}</Project>
+      <Name>OptionsSharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ServiceStarter.Common\ServiceStarter.Common.csproj">
       <Project>{14cc9bde-5c81-4a57-81ad-52afaca929ee}</Project>
       <Name>ServiceStarter.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Configuration\ServiceStarter.Configuration.csproj">
+      <Project>{dfbc072f-8cdb-4c0e-bcbc-454d56239aa1}</Project>
+      <Name>ServiceStarter.Configuration</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

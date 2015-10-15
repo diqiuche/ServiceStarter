@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
+using System.Threading;
 
 namespace ServiceStarter
 {
@@ -15,15 +16,20 @@ namespace ServiceStarter
 
         protected override void OnStop()
         {
-            if (0 != ServiceContext.Current.Domains.Count)
+            ServiceControllerDaemon.Current.Stop();
+
+            if (0 != ServiceContext.Current.ServiceSlots.Count)
             {
-                foreach (KeyValuePair<string, AppDomain> appPair in ServiceContext.Current.Domains)
+                ServiceSlot[] slots = new ServiceSlot[ServiceContext.Current.ServiceSlots.Count];
+
+                ServiceContext.Current.ServiceSlots.CopyTo(slots);
+
+                foreach (ServiceSlot slot in slots)
                 {
-                    AppDomain.Unload(appPair.Value);
+                    EventWaitHandle doneSignal = new EventWaitHandle(false, EventResetMode.ManualReset, slot.Signal);
+                    doneSignal.Set();
                 }
             }
-
-            base.OnStop();
         }
     }
 }

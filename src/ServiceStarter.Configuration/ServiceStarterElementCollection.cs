@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServiceStarter.Common
+namespace ServiceStarter.Configuration
 {
     public class ServiceStarterElementCollection : ConfigurationElementCollection
     {

@@ -9,5 +9,7 @@ namespace ServiceStarter.Common
     public interface IService : IDisposable
     {
         void Start();
+
+        void Stop();
     }
 }

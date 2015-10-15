@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServiceStarter.Common
+namespace ServiceStarter.Configuration
 {
     public class ServiceStarterSection : ConfigurationSection
     {
@@ -23,7 +23,7 @@ namespace ServiceStarter.Common
         }
 
         [ConfigurationProperty("services", IsRequired = true)]
-        [ConfigurationCollection(typeof(ServiceStarterElementCollection))]
+        [ConfigurationCollection(typeof(ServiceStarterElement), AddItemName = "service", ClearItemsName = "clear", RemoveItemName = "remove")]
         public ServiceStarterElementCollection Services
         {
             get
