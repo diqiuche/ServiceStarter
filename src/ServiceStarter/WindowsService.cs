@@ -28,6 +28,22 @@ namespace ServiceStarter
                 {
                     EventWaitHandle doneSignal = new EventWaitHandle(false, EventResetMode.ManualReset, slot.Signal);
                     doneSignal.Set();
+
+                    EventWaitHandle waitExitSignal = new EventWaitHandle(false, EventResetMode.ManualReset, "exit_" + slot.Signal);
+                    if (waitExitSignal.WaitOne(10 * 1000))
+                    {
+                        if (!slot.WorkProcess.WaitForExit(10 * 1000))
+                        {
+                            slot.WorkProcess.Kill();
+
+                            ServiceSlot tSlot = ServiceContext.Current.ServiceSlots.FirstOrDefault(s => s.Name == slot.Name);
+
+                            if (null != tSlot)
+                            {
+                                ServiceContext.Current.ServiceSlots.Remove(tSlot);
+                            }
+                        }
+                    }
                 }
             }
         }

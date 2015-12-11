@@ -86,10 +86,12 @@ namespace ServiceStarter
 
                     IService service = newDomain.CreateInstanceAndUnwrap(eleConfig.AssemblyName, eleConfig.TypeName) as IService;
 
+                    Sponsor<IService> s = new Sponsor<IService>(service);
+
                     service.Start();
 
                     ServiceContext.Current.Domains.Add(eleConfig.Name, newDomain);
-                    ServiceContext.Current.Services.Add(eleConfig.Name, service);
+                    ServiceContext.Current.Services.Add(eleConfig.Name, s);
 
                     retValue = true;
                 }

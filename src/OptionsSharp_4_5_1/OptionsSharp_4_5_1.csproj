@@ -1,23 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{14CC9BDE-5C81-4A57-81AD-52AFACA929EE}</ProjectGuid>
+    <ProjectGuid>{114EB954-5BB6-4C0E-8CB9-54102C3A8D7E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ServiceStarter.Common</RootNamespace>
-    <AssemblyName>ServiceStarter.Common</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <RootNamespace>OptionsSharp</RootNamespace>
+    <AssemblyName>OptionsSharp</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\build\4.5.1\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -32,10 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
-    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -43,11 +39,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\ServiceStarter.Common_4_5_1\Sponsor.cs">
-      <Link>Sponsor.cs</Link>
+    <Compile Include="..\OptionsSharp\Delegates.cs">
+      <Link>Delegates.cs</Link>
     </Compile>
-    <Compile Include="BaseStarter.cs" />
-    <Compile Include="IService.cs" />
+    <Compile Include="..\OptionsSharp\Option.cs">
+      <Link>Option.cs</Link>
+    </Compile>
+    <Compile Include="..\OptionsSharp\OptionContext.cs">
+      <Link>OptionContext.cs</Link>
+    </Compile>
+    <Compile Include="..\OptionsSharp\OptionException.cs">
+      <Link>OptionException.cs</Link>
+    </Compile>
+    <Compile Include="..\OptionsSharp\OptionSet.cs">
+      <Link>OptionSet.cs</Link>
+    </Compile>
+    <Compile Include="..\OptionsSharp\OptionValueCollection.cs">
+      <Link>OptionValueCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\OptionsSharp\OptionValueType.cs">
+      <Link>OptionValueType.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

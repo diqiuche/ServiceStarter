@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D4B44418-B7ED-48DA-BD76-3129868F271A}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ServiceStarter</RootNamespace>
+    <AssemblyName>ServiceStarter</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\build\4.5.1\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="syslog4net">
+      <HintPath>..\packages\syslog4net.1.0.9\lib\net40\syslog4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\ServiceStarter\ActionResult.cs">
+      <Link>ActionResult.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\BasicServiceInstaller.cs">
+      <Link>BasicServiceInstaller.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\BasicServiceStarter.cs">
+      <Link>BasicServiceStarter.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\FormatExtension.cs">
+      <Link>FormatExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\IServiceController.cs">
+      <Link>IServiceController.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\Logger.cs">
+      <Link>Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\ServiceContext.cs">
+      <Link>ServiceContext.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\ServiceController.cs">
+      <Link>ServiceController.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\ServiceControllerClient.cs">
+      <Link>ServiceControllerClient.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\ServiceControllerService.cs">
+      <Link>ServiceControllerService.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\ServiceSlot.cs">
+      <Link>ServiceSlot.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceStarter\WindowsService.cs">
+      <Link>WindowsService.cs</Link>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OptionsSharp_4_5_1\OptionsSharp_4_5_1.csproj">
+      <Project>{114eb954-5bb6-4c0e-8cb9-54102c3a8d7e}</Project>
+      <Name>OptionsSharp_4_5_1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Common_4_5_1\ServiceStarter.Common_4_5_1.csproj">
+      <Project>{e2aaaa2e-9a9c-4b26-9338-afa5b51edec0}</Project>
+      <Name>ServiceStarter.Common_4_5_1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Configuration_4_5_1\ServiceStarter.Configuration_4_5_1.csproj">
+      <Project>{d0800f6a-e146-4463-96d6-e60f0e7e6e02}</Project>
+      <Name>ServiceStarter.Configuration_4_5_1</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
