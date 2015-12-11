@@ -5,16 +5,16 @@ using System.Text;
 
 namespace ServiceStarter.Common
 {
-    public abstract class BaseStarter : MarshalByRefObject, IService
+    public abstract class BaseStarter : MarshalByRefObject, IService, IDisposable
     {
         private static object _Locker = new object();
 
         private bool _IsRunning = false;
 
-        public override object InitializeLifetimeService()
-        {
-            return null;
-        }
+        //public override object InitializeLifetimeService()
+        //{
+        //    return null;
+        //}
 
         public void Start()
         {
@@ -51,12 +51,16 @@ namespace ServiceStarter.Common
 
         public abstract void StopService();
 
+        public abstract void DisposeService();
+
         public void Dispose()
         {
             if(_IsRunning)
             {
                 Stop();
             }
+
+            DisposeService();
         }
     }
 }

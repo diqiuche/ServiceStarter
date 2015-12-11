@@ -43,14 +43,14 @@ namespace ServiceStarter
 
         private Dictionary<string, AppDomain> _AppDomains;
 
-        private Dictionary<string, IService> _Services;
+        private Dictionary<string, Sponsor<IService>> _Services;
 
         private List<ServiceSlot> _Slots;
 
         private ServiceContext()
         {
             _AppDomains = new Dictionary<string, AppDomain>();
-            _Services = new Dictionary<string, IService>();
+            _Services = new Dictionary<string, Sponsor<IService>>();
             _Slots = new List<ServiceSlot>();
 
             _Configs = (ServiceStarterSection)ConfigurationManager.GetSection("serviceStarters");
@@ -133,7 +133,7 @@ namespace ServiceStarter
             }
         }
 
-        public Dictionary<string, IService> Services
+        public Dictionary<string, Sponsor<IService>> Services
         {
             get
             {

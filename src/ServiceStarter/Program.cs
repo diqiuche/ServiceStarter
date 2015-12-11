@@ -183,7 +183,20 @@ namespace ServiceStarter
                                         doneSignal.Set();
 
                                         EventWaitHandle waitExitSignal = new EventWaitHandle(false, EventResetMode.ManualReset, "exit_" + slot.Signal);
-                                        waitExitSignal.WaitOne();
+                                        if (waitExitSignal.WaitOne(10 * 1000))
+                                        {
+                                            if (!slot.WorkProcess.WaitForExit(10 * 1000))
+                                            {
+                                                slot.WorkProcess.Kill();
+
+                                                ServiceSlot tSlot = ServiceContext.Current.ServiceSlots.FirstOrDefault(s => s.Name == slot.Name);
+
+                                                if(null != tSlot)
+                                                {
+                                                    ServiceContext.Current.ServiceSlots.Remove(tSlot);
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -239,7 +252,7 @@ namespace ServiceStarter
                                         {
                                             if (ServiceContext.Current.Services.ContainsKey(appName))
                                             {
-                                                ServiceContext.Current.Services[appName].Stop();
+                                                ServiceContext.Current.Services[appName].Instance.Stop();
                                             }
 
                                             //AppDomain.Unload(ServiceContext.Current.Domains[appName]);
@@ -257,6 +270,11 @@ namespace ServiceStarter
                                         catch (CannotUnloadAppDomainException eX)
                                         {
                                             string.Format("无法卸载服务：{0}。发生错误：{1}", appName, eX.Message).Error();
+                                            eX.Exception();
+                                        }
+                                        catch(Exception eX)
+                                        {
+                                            string.Format("卸载服务：{0} 发生错误：{1}", appName, eX.Message).Error();
                                             eX.Exception();
                                         }
                                     }
