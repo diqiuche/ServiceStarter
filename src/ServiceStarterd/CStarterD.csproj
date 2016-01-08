@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0BE8E0D5-17ED-47B9-B1B8-43C4CFC8D021}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CStarterD</RootNamespace>
+    <AssemblyName>CStarterD</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\build\4.0\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="syslog4net">
+      <HintPath>..\packages\syslog4net.1.0.9\lib\net40\syslog4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BasicServiceStarter.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="CStarterDNotifierService.cs" />
+    <Compile Include="ServiceContext.cs" />
+    <Compile Include="CStarterDControlService.cs" />
+    <Compile Include="CStarterDController.cs" />
+    <Compile Include="CStarterClient.cs" />
+    <Compile Include="CStarterDNotifier.cs" />
+    <Compile Include="ServiceStarterParams.cs" />
+    <Compile Include="WindowsService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OptionsSharp\CStarter.OptionsSharp.csproj">
+      <Project>{07d7abd0-a981-46d1-b9d2-cd51959f64ba}</Project>
+      <Name>CStarter.OptionsSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Configuration\CStarter.Configuration.csproj">
+      <Project>{dfbc072f-8cdb-4c0e-bcbc-454d56239aa1}</Project>
+      <Name>CStarter.Configuration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Contracts\CStarter.Contracts.csproj">
+      <Project>{8d184d5a-acd3-4cbe-b881-04455e89e67b}</Project>
+      <Name>CStarter.Contracts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarter.Utils\CStarter.Utils.csproj">
+      <Project>{65da1447-9696-4d67-bc6c-a4aaa1354a9f}</Project>
+      <Name>CStarter.Utils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarterd.Common\CStarterD.Common.csproj">
+      <Project>{7c7d8e11-ccc3-4de9-beb0-262071d11e7b}</Project>
+      <Name>CStarterD.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStarterd.Contracts\CStarterD.Contracts.csproj">
+      <Project>{dd426418-3a83-41ce-b072-8b81b61137e7}</Project>
+      <Name>CStarterD.Contracts</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
