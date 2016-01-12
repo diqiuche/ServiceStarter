@@ -90,6 +90,48 @@ namespace CStarterD
             }
         }
 
+        static bool StartDaemons(ServiceStarterSection srvConfig)
+        {
+            bool retValue = false;
+
+            try
+            {
+                "启动监听服务".Info();
+
+                CStarterDControlServiceDaemon.Current.Start(srvConfig);
+                CStarterDNotifierServiceDaemon.Current.Start(srvConfig);
+
+                "监听服务已经启动".Info();
+
+                retValue = true;
+            }
+            catch(Exception eX)
+            {
+                eX.Exception();
+            }
+
+            return retValue;
+        }
+
+        static bool StartServiceProccess(ServiceStarterSection srvConfig)
+        {
+            bool retValue = false;
+            try
+            {
+                "启动注册的服务".Info();
+                BasicServiceStarter.Run(srvConfig);
+                "服务都已经启动".Info();
+
+                retValue = true;
+            }
+            catch (Exception eX)
+            {
+                retValue = false;
+            }
+
+            return retValue;
+        }
+
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         [STAThread]
         static void Main(string[] args)
@@ -144,41 +186,41 @@ namespace CStarterD
                     }
                     else
                     {
-                        "启动监听服务".Info();
+                        CStarterMonitor monitor = new CStarterMonitor();
 
-                        CStarterDControlServiceDaemon.Current.Start(srvConfig);
-                        CStarterDNotifierServiceDaemon.Current.Start(srvConfig);
-
-                        "监听服务已经启动".Info();
-
-                        BasicServiceStarter.Run(srvConfig);
-
-                        "按任意键关闭程序".Info();
-                        Console.ReadLine();
-
-                        "程序正在退出，请不要关闭窗口".Info();
-                        string.Format("需要停止 {0} 个服务", ServiceContext.Current.ServiceSlots.Count).Info();
-
-                        if (0 != ServiceContext.Current.ServiceSlots.Count)
+                        if(StartDaemons(srvConfig))
                         {
-                            ServiceSlot[] slots = new ServiceSlot[ServiceContext.Current.ServiceSlots.Count];
-
-                            ServiceContext.Current.ServiceSlots.CopyTo(slots);
-
-                            foreach (ServiceSlot slot in slots)
+                            if(StartServiceProccess(srvConfig))
                             {
-                                string.Format("正在停止服务：{0}", slot.Name).Info();
+                                monitor.StartMonitor();
 
-                                EventWaitHandle waitExitSignal;
-                                bool created = EventWaitHandleHelper.Create("exit_" + slot.Signal, EventResetMode.ManualReset, out waitExitSignal);
+                                "按任意键关闭程序".Info();
+                                Console.ReadLine();
 
-                                (new CStarterClient()).Stop(srvConfig.ServiceInfo.Name, slot.Name, slot.Signal);
+                                monitor.StopMonitor();
 
-                                if (waitExitSignal.WaitOne(10 * 1000))
+                                "程序正在退出，请不要关闭窗口".Info();
+                                string.Format("需要停止 {0} 个服务", ServiceContext.Current.ServiceSlots.Count).Info();
+
+                                if (0 != ServiceContext.Current.ServiceSlots.Count)
                                 {
-                                    if (!slot.WorkProcess.WaitForExit(10 * 1000))
+                                    ServiceSlot[] slots = new ServiceSlot[ServiceContext.Current.ServiceSlots.Count];
+
+                                    ServiceContext.Current.ServiceSlots.CopyTo(slots);
+
+                                    foreach (ServiceSlot slot in slots)
                                     {
-                                        slot.WorkProcess.Kill();
+                                        string.Format("正在停止服务：{0}", slot.Name).Info();
+
+                                        (new CStarterClient()).Stop(srvConfig.ServiceInfo.Name, slot.Name, slot.Signal);
+
+                                        if (!ServiceContext.Current.WaitServiceStopping(10))
+                                        {
+                                            if (!slot.WorkProcess.WaitForExit(10 * 1000))
+                                            {
+                                                slot.WorkProcess.Kill();
+                                            }
+                                        }
 
                                         ServiceSlot tSlot = ServiceContext.Current.ServiceSlots.FirstOrDefault(s => s.Name == slot.Name);
 
@@ -188,12 +230,27 @@ namespace CStarterD
                                         }
                                     }
                                 }
+
+                                "停止监听服务".Info();
+
+                                CStarterDControlServiceDaemon.Current.Stop();
+                                CStarterDNotifierServiceDaemon.Current.Stop();
+
+                                Environment.Exit(0);
+                            }
+                            else
+                            {
+                                CStarterDControlServiceDaemon.Current.Stop();
+                                CStarterDNotifierServiceDaemon.Current.Stop();
+
+                                Environment.Exit(-1);
                             }
                         }
-
-                        "停止监听服务".Info();
-                        CStarterDControlServiceDaemon.Current.Stop();
-                        CStarterDNotifierServiceDaemon.Current.Stop();
+                        else
+                        {
+                            "监听服务启动失败，无法继续启动".Error();
+                            Environment.Exit(-1);
+                        }
                     }
                 }
                 catch (Exception eX)
