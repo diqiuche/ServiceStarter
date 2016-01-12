@@ -111,32 +111,52 @@ namespace CStarterD
             e.Data.Error();
         }
 
-        void p_Exited(object sender, EventArgs e)
-        {
-            RemoveSlot((sender as Process).Id);
-        }
-
         public void RemoveSlot(int pid)
         {
             if (0 != _Slots.Count)
             {
-                ServiceSlot target = null;
-
-                foreach (ServiceSlot slot in _Slots)
+                lock (_Locker)
                 {
-                    if (slot.WorkProcess.Id == pid)
+                    if (0 != _Slots.Count)
                     {
-                        target = slot;
-                        break;
+                        ServiceSlot target = null;
+
+                        foreach (ServiceSlot slot in _Slots)
+                        {
+                            if (slot.WorkProcess.Id == pid)
+                            {
+                                target = slot;
+                                break;
+                            }
+                        }
+
+                        if (null != target)
+                        {
+                            string.Format("{0} 已经退出", target.Name);
+                            _Slots.Remove(target);
+                        }
                     }
                 }
+            }
+        }
 
-                if (null != target)
+        public ServiceSlot[] GetServiceSlots()
+        {
+            ServiceSlot[] retValue = new ServiceSlot[0];
+
+            if(0 != _Slots.Count)
+            {
+                lock(_Locker)
                 {
-                    string.Format("{0} 已经退出", target.Name);
-                    _Slots.Remove(target);
+                    if (0 != _Slots.Count)
+                    {
+                        retValue = (from slot in _Slots
+                                    select slot).ToArray();
+                    }
                 }
             }
+
+            return retValue;
         }
     }
 }

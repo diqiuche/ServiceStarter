@@ -190,17 +190,22 @@ namespace CStarter
 
                 try
                 {
-                    CStarterControlServiceDaemon.Current.Start();
-
                     string msg = "";
 
-                    if (!BasicServiceStarter.RunService(out msg))
+                    if (!BasicServiceStarter.CreateDomain(out msg))
                     {
-                        msg.Error();
+                        "创建服务域失败，服务无法启动".Error();
                     }
                     else
                     {
-                        isStarted = true;
+                        if (!BasicServiceStarter.RunService(out msg))
+                        {
+                            msg.Error();
+                        }
+                        else
+                        {
+                            isStarted = true;
+                        }
                     }
                 }
                 catch(Exception eX)
@@ -210,6 +215,8 @@ namespace CStarter
 
                 if (isStarted)
                 {
+                    CStarterControlServiceDaemon.Current.Start();
+
                     (new CStarterDNotifyClient()).StartComplete(ServiceContext.Current.Domain,
                         ServiceContext.Current.Signal);
 
@@ -254,6 +261,11 @@ namespace CStarter
                     Environment.Exit(-100);
                 }
             }
+        }
+
+        static void ServiceDomain_DomainUnload(object sender, EventArgs e)
+        {
+            "服务进程 {0} 的服务域被卸载".Formate(ServiceContext.Current.Name).Error();
         }
 
         static void ShowHelp(OptionSet p)

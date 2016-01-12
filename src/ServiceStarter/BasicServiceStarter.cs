@@ -20,20 +20,16 @@ namespace CStarter
 {
     public static class BasicServiceStarter
     {
-        public static bool RunService(out string msg)
+        public static bool CreateDomain(out string msg)
         {
             bool retValue = false;
 
             msg = "";
 
+            "为服务 {0} 创建服务域".Formate(ServiceContext.Current.Name).Info();
+
             try
             {
-                string.Format("启动位于 {0} 位置的 {1} 服务，并启动实例： {2}",
-                    ServiceContext.Current.ContentPath,
-                    ServiceContext.Current.Name,
-                    ServiceContext.Current.TargetType)
-                    .Info();
-
                 AppDomainSetup oSetup = new AppDomainSetup();
                 oSetup.ApplicationName = ServiceContext.Current.Name;
                 oSetup.ApplicationBase = ServiceContext.Current.ContentPath;
@@ -56,20 +52,46 @@ namespace CStarter
                     AppDomain.CurrentDomain.Evidence,
                     oSetup);
 
-                newDomain.SetData("logRoot", 
+                newDomain.SetData("logRoot",
                     Path.Combine(
                     Directory.GetParent(
                     AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new char[] { '\\' })).FullName,
                     "logs"));
 
-                IService service = newDomain.CreateInstanceAndUnwrap(ServiceContext.Current.AssemblyName,
+                ServiceContext.Current.ServiceDomain = newDomain;
+
+                retValue = true;
+            }
+            catch(Exception eX)
+            {
+                msg = eX.Message;
+                msg.Error();
+                eX.Exception();
+            }
+
+            return retValue;
+        }
+
+        public static bool RunService(out string msg)
+        {
+            bool retValue = false;
+
+            msg = "";
+
+            try
+            {
+                string.Format("启动服务 {0} 的实例： {1}",
+                    ServiceContext.Current.Name,
+                    ServiceContext.Current.TargetType)
+                    .Info();
+
+                IService service = ServiceContext.Current.ServiceDomain.CreateInstanceAndUnwrap(ServiceContext.Current.AssemblyName,
                     ServiceContext.Current.TargetType) as IService;
 
                 Sponsor<IService> s = new Sponsor<IService>(service);
 
                 service.Start();
 
-                ServiceContext.Current.ServiceDomain = newDomain;
                 ServiceContext.Current.Service = s;
 
                 retValue = true;

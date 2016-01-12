@@ -81,5 +81,18 @@ namespace CStarter.Configuration
                 return (DependenceServiceCollection)base["dependenceServices"];
             }
         }
+
+        [ConfigurationProperty("restartOnError", IsRequired = false, DefaultValue = "N")]
+        public string RestartOnError
+        {
+            get
+            {
+                return (string)base["restartOnError"];
+            }
+            set
+            {
+                base["restartOnError"] = value;
+            }
+        }
     }
 }

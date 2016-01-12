@@ -19,5 +19,7 @@ namespace CStarterD.Common
         public ServiceStarterElement Config { get; set; }
 
         public string Signal { get; set; }
+
+        public SlotStatus Status { get; set; }
     }
 }

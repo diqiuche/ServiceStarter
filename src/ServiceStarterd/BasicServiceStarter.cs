@@ -22,12 +22,6 @@ namespace CStarterD
     {
         public static bool RunServiceProcess(string domain, ServiceStarterElement eleConfig, out string msg)
         {
-            string.Format("服务 {0} 依赖服务 {1}", eleConfig.Name, string.Join(",", (from refSrv in eleConfig.DependenceServices.Cast<DependenceServiceConfigurationElement>()
-                                                                               select refSrv.ServiceName).ToArray())).Info();
-
-            string.Format("启动位于 {0} 位置的 {1} 服务，并启动实例： {2}", eleConfig.ContentPath, eleConfig.Name, eleConfig.TypeName)
-                        .Info();
-
             bool retValue = false;
 
             string signal = Guid.NewGuid().ToString();
@@ -40,7 +34,7 @@ namespace CStarterD
 
                 if(!Path.IsPathRooted(contentFullPath))
                 {
-                    contentFullPath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName,
+                    contentFullPath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new char[] { '\\' })).FullName, "services",
                         contentFullPath.TrimStart(new char[] { '~' }).TrimStart(new char[] { '/' }));
                 }
 
@@ -56,27 +50,40 @@ namespace CStarterD
                 p.OutputDataReceived += new DataReceivedEventHandler(p_OutputDataReceived);
                 p.ErrorDataReceived += new DataReceivedEventHandler(p_ErrorDataReceived);
 
-                p.StartInfo.Arguments.Info();
-
                 p.Start();
                 p.BeginErrorReadLine();
                 p.BeginOutputReadLine();
 
-                string.Format("等待服务 {0}({1}) 启动完成", eleConfig.Name, signal).Info();
+                CancellationTokenSource token = new CancellationTokenSource();
 
-                if (ServiceContext.Current.WaitServiceStarting(30))
-                {
-                    "服务{0}（{1}）已经成功启动".Formate(eleConfig.Name, signal).Info();
-
-                    ServiceContext.Current.AddSlot(eleConfig, p, signal);
-
-                    retValue = true;
-                }
-                else
+                Task t = new Task(() =>
                 {
                     if (p.HasExited)
                     {
-                        switch(p.ExitCode)
+                        "服务进程 {0} 已经退出".Formate(eleConfig.Name).Error();
+                        ServiceContext.Current.ServiceStartedComplete();
+                    }
+                }, token.Token);
+
+                string.Format("等待服务 {0} 启动完成", eleConfig.Name).Info();
+
+                t.Start();
+
+                if (ServiceContext.Current.WaitServiceStarting(30))
+                {
+                    token.Cancel();
+
+                    if (!p.HasExited)
+                    {
+                        "服务{0}已经成功启动".Formate(eleConfig.Name).Info();
+
+                        ServiceContext.Current.AddSlot(eleConfig, p, signal);
+
+                        retValue = true;
+                    }
+                    else
+                    {
+                        switch (p.ExitCode)
                         {
                             case 0:
                                 "程序已退出，但是未返回错误码".Error();
@@ -110,17 +117,17 @@ namespace CStarterD
                                 break;
                         }
                     }
-                    else
-                    {
-                        "在限定的时间内，启动的服务无响应，服务{0}可能没有成功启动".Formate(eleConfig.Name).Warn();
-
-                        ServiceContext.Current.AddSlot(eleConfig, p, signal);
-
-                        retValue = true;
-                    }
                 }
+                else
+                {
+                    token.Cancel();
 
-                
+                    "在限定的时间内，启动的服务无响应，服务{0}可能没有成功启动".Formate(eleConfig.Name).Warn();
+
+                    ServiceContext.Current.AddSlot(eleConfig, p, signal);
+
+                    retValue = true;
+                }
             }
             catch(Exception eX)
             {
@@ -160,9 +167,35 @@ namespace CStarterD
                     foreach (ServiceStarterElement eleConfig in orderedConfigs)
                     {
                         string msg = "";
-                        if (!RunServiceProcess(serviceInfo.ServiceInfo.Name, eleConfig, out msg))
+
+                        "启动服务 {0} 的进程".Formate(eleConfig.Name).Info();
+
+                        bool isContinued = true;
+
+                        if (0 != eleConfig.DependenceServices.Count)
                         {
-                            msg.Error();
+                            string.Format("服务 {0} 依赖服务 {1}", eleConfig.Name, 
+                                string.Join(",", (from refSrv in eleConfig.DependenceServices.Cast<DependenceServiceConfigurationElement>()
+                                                                                               select refSrv.ServiceName).ToArray())).Info();
+
+                            foreach(DependenceServiceConfigurationElement dependedOnSrv in eleConfig.DependenceServices)
+                            {
+                                "检测依赖服务 {0}".Formate(dependedOnSrv.ServiceName).Info();
+                                if (null == ServiceContext.Current.ServiceSlots.FirstOrDefault(s => s.Name == dependedOnSrv.ServiceName))
+                                {
+                                    "依赖服务 {0} 未启动，服务启动失败".Formate(dependedOnSrv.ServiceName).Error();
+                                    isContinued = false;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if(isContinued)
+                        {
+                            if (!RunServiceProcess(serviceInfo.ServiceInfo.Name, eleConfig, out msg))
+                            {
+                                msg.Error();
+                            }
                         }
                     }
 
