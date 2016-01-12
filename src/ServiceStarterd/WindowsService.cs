@@ -16,6 +16,8 @@ namespace CStarterD
     {
         private ServiceStarterSection _Config;
 
+        private CStarterMonitor _StarterMonitor;
+
         public void Initialize(ServiceStarterSection srvConfig)
         {
             _Config = srvConfig;
@@ -31,10 +33,16 @@ namespace CStarterD
             "监听服务已经启动".Info();
 
             BasicServiceStarter.Run(_Config);
+
+            _StarterMonitor = new CStarterMonitor();
+
+            _StarterMonitor.StartMonitor();
         }
 
         protected override void OnStop()
         {
+            _StarterMonitor.StopMonitor();
+
             if (0 != ServiceContext.Current.ServiceSlots.Count)
             {
                 ServiceSlot[] slots = new ServiceSlot[ServiceContext.Current.ServiceSlots.Count];
