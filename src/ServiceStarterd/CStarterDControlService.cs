@@ -72,17 +72,17 @@ namespace CStarterD
 
             try
             {
-                "初始化监听服务对象".Info();
+                "初始化监听服务对象".Debug();
 
                 _Srv = new CStarterDController();
 
-                "初始化监听服务配置".Info();
-                string.Format("监听服务监听地址：{0}", "net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name).Info();
+                "初始化监听服务配置".Debug();
+                string.Format("监听服务监听地址：{0}", "net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name).Debug();
 
                 _Host = new ServiceHost(_Srv, new Uri("net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name));
                 _Host.AddServiceEndpoint(typeof(ICStarterDControl), new NetNamedPipeBinding(), "control");
 
-                "开启监听服务".Info();
+                "开启监听服务".Debug();
 
                 _Host.Open();
 

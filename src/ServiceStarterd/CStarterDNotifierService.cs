@@ -71,17 +71,17 @@ namespace CStarterD
 
             try
             {
-                "初始化通讯服务对象".Info();
+                "初始化通讯服务对象".Debug();
 
                 _Srv = new CStarterDNotifier();
 
-                "初始化通讯服务配置".Info();
-                string.Format("通讯服务监听地址：{0}/comm", "net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name).Info();
+                "初始化通讯服务配置".Debug();
+                string.Format("通讯服务监听地址：{0}/comm", "net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name).Debug();
 
                 _Host = new ServiceHost(_Srv, new Uri("net.pipe://localhost/" + _SrvConfig.ServiceInfo.Name));
                 _Host.AddServiceEndpoint(typeof(ICStarterDNotifier), new NetNamedPipeBinding(), "comm");
 
-                "开启监听服务".Info();
+                "开启监听服务".Debug();
 
                 _Host.Open();
 

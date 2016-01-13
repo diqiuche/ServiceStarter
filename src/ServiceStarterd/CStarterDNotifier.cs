@@ -14,13 +14,13 @@ namespace CStarterD
     {
         public void StarterStartCompleted(string signal)
         {
-            "收到服务{0}启动完成指令".Formate(signal).Info();
+            "收到服务{0}启动完成指令".Formate(signal).Debug();
             ServiceContext.Current.ServiceStartedComplete();
         }
 
         public void StarterStopCompleted(string signal)
         {
-            "收到服务{0}停止完成指令".Formate(signal).Info();
+            "收到服务{0}停止完成指令".Formate(signal).Debug();
             ServiceContext.Current.ServiceStoppedComplete();
         }
     }

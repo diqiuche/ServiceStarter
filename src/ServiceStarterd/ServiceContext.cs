@@ -80,6 +80,12 @@ namespace CStarterD
             set;
         }
 
+        public bool IsDebug
+        {
+            get;
+            set;
+        }
+
         public void AddSlot(ServiceStarterElement eleConfig, Process p, string signal)
         {
             ServiceSlot slot = new ServiceSlot()

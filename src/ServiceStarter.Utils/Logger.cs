@@ -8,90 +8,29 @@ namespace CStarter.Utils
 {
     public static class Logger
     {
-        static ILog _Log = LogManager.GetLogger("starterLogger");
-
-        public static void Info(this string msg, bool showTime = true)
+        public static void Info(this string msg)
         {
-            if (Environment.UserInteractive)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
-                Console.ResetColor();
-            }
-            else
-            {
-                _Log.Info(msg);
-            }
+            LogManager.GetLogger("starterLogger").Info(msg);
         }
 
-        public static void Debug(this string msg, bool showTime = true)
+        public static void Debug(this string msg)
         {
-            if (Environment.UserInteractive)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
-                Console.ResetColor();
-            }
-            else
-            {
-                _Log.Debug(msg);
-            }
+            LogManager.GetLogger("starterLogger").Debug(msg);
         }
 
-        public static void Warn(this string msg, bool showTime = true)
+        public static void Warn(this string msg)
         {
-            if (Environment.UserInteractive)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
-                Console.ResetColor();
-            }
-            else
-            {
-                _Log.Warn(msg);
-            }
+            LogManager.GetLogger("starterLogger").Warn(msg);
         }
 
-        public static void Error(this string msg, bool showTime = true)
+        public static void Error(this string msg)
         {
-            if (Environment.UserInteractive)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", msg);
-                Console.ResetColor();
-            }
-            else
-            {
-                _Log.Error(msg);
-            }
+            LogManager.GetLogger("starterLogger").Error(msg);
         }
 
-        public static void Exception(this Exception eX, bool showTime = true)
+        public static void Exception(this Exception eX)
         {
-            if (Environment.UserInteractive)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.Message);
-                Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.StackTrace);
-                Exception innerEx = eX.InnerException;
-                while (null != innerEx)
-                {
-                    Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.Message);
-                    Console.Error.WriteLine("{0}{1}", showTime ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" : "", eX.StackTrace);
-
-                    innerEx = innerEx.InnerException;
-                }
-                Console.ResetColor();
-            }
-            else
-            {
-                _Log.Error(eX.Message, eX);
-            }
-        }
-
-        public static void Domain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            (e.ExceptionObject as Exception).Exception();
+            LogManager.GetLogger("starterLogger").Error(eX.Message, eX);
         }
     }
 }
