@@ -15,6 +15,9 @@ using log4net.Appender;
 using syslog4net.Filter;
 using syslog4net.Layout;
 using System.Reflection;
+using log4net.Core;
+using log4net.Filter;
+using log4net.Repository;
 
 namespace CStarterD
 {
@@ -22,72 +25,139 @@ namespace CStarterD
     {
         static void Version()
         {
-            "服务守护程序，版本号：1.0".Info(false);
+            "服务守护程序，版本号：1.0".Info();
         }
 
         static void ShowHelp(OptionSet p)
         {
-            "用法：CStarterD [Options]+".Info(false);
-            "对服务做出相应的操作指令".Info(false);
+            "用法：CStarterD [Options]+".Info();
+            "对服务做出相应的操作指令".Info();
 
             p.WriteOptionDescriptions(Console.Out);
         }
 
-        static void PrepareLogger(string domain)
+        static ColoredConsoleAppender CreateColoredConsoleAppender(string domain)
         {
-            Hierarchy hier = log4net.LogManager.GetRepository() as Hierarchy;
+            ColoredConsoleAppender retValue = new ColoredConsoleAppender();
 
+            retValue.Layout = new SyslogLayout()
+            {
+                StructuredDataPrefix = "CStarterD@" + domain
+            };
+
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Debug,
+                BackColor = ColoredConsoleAppender.Colors.White,
+                ForeColor = ColoredConsoleAppender.Colors.Green
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Info,
+                BackColor = ColoredConsoleAppender.Colors.Green,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Warn,
+                BackColor = ColoredConsoleAppender.Colors.Cyan,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Error,
+                BackColor = ColoredConsoleAppender.Colors.Red,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+
+            return retValue;
+        }
+
+        static void PrepareAppender(string domain, string minLevel)
+        {
             string logRootFullName = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new char[] { '\\' })).FullName,
                 "logs", "CStarterd");
 
-            if(null != hier)
+            foreach (ILoggerRepository respository in log4net.LogManager.GetAllRepositories())
             {
-                RollingFileAppender commonAppender = (RollingFileAppender)hier.GetAppenders().Where(a => a.Name.Equals("CommonAppender")).FirstOrDefault();
+                Hierarchy hier = (Hierarchy)respository;
 
-                if (null != commonAppender)
+                foreach (var appender in hier.GetAppenders())
                 {
-                    commonAppender.File = Path.Combine(logRootFullName, "Common", "logs.txt");
+                    MethodInfo addFilterMethod = appender.GetType().GetMethod("AddFilter", BindingFlags.Public | BindingFlags.Instance);
 
-                    var filter = new LogExceptionToFileFilter()
+                    if (null != addFilterMethod)
                     {
-                        ExceptionLogFolder = Path.Combine(logRootFullName, "Common", "Exceptions")
-                    };
-                    commonAppender.AddFilter(filter);
-                    filter.ActivateOptions();
+                        var filter = new LogExceptionToFileFilter()
+                        {
+                            ExceptionLogFolder = Path.Combine(logRootFullName, appender.Name, "Exceptions")
+                        };
+                        addFilterMethod.Invoke(appender, new object[] { filter });
+                        filter.ActivateOptions();
+                    }
 
-                    var layout = new SyslogLayout()
+                    PropertyInfo fileProp = appender.GetType().GetProperty("File", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != fileProp)
                     {
-                        StructuredDataPrefix = "CStarterD@" + domain
-                    };
-                    commonAppender.Layout = layout;
-                    layout.ActivateOptions();
+                        fileProp.SetValue(appender, Path.Combine(logRootFullName, appender.Name, "logs.txt"), null);
+                    }
 
-                    commonAppender.ActivateOptions();
+                    PropertyInfo layoutProp = appender.GetType().GetProperty("Layout", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != layoutProp)
+                    {
+                        var layout = new SyslogLayout()
+                        {
+                            StructuredDataPrefix = "CStarterD@" + domain
+                        };
+
+                        layoutProp.SetValue(appender,
+                            layout, null);
+
+                        layout.ActivateOptions();
+                    }
+
+                    MethodInfo activeMethod = appender.GetType().GetMethod("ActivateOptions", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != activeMethod)
+                        activeMethod.Invoke(appender, null);
                 }
 
-                RollingFileAppender starterAppender = (RollingFileAppender)hier.GetAppenders().Where(a => a.Name.Equals("StarterAppender")).FirstOrDefault();
+                PrepareLoggerLevel(respository, domain, minLevel);
+            }
 
-                if(null != starterAppender)
+            PrepareRootLoggerLevel(minLevel);
+        }
+
+        static void PrepareLoggerLevel(ILoggerRepository repository, string domain, string level)
+        {
+            repository.Threshold = repository.LevelMap[level];
+            log4net.Repository.Hierarchy.Hierarchy hier = (log4net.Repository.Hierarchy.Hierarchy)repository;
+            log4net.Core.ILogger[] loggers = hier.GetCurrentLoggers();
+            foreach (log4net.Core.ILogger logger in loggers)
+            {
+                Console.WriteLine(logger.Name);
+
+                ((log4net.Repository.Hierarchy.Logger)logger).Level = hier.LevelMap[level];
+
+                if(Environment.UserInteractive)
                 {
-                    starterAppender.File = Path.Combine(logRootFullName, "Starterd", "logs.txt");
-
-                    var filter = new LogExceptionToFileFilter()
-                    {
-                        ExceptionLogFolder = Path.Combine(logRootFullName, "Starterd", "Exceptions")
-                    };
-                    starterAppender.AddFilter(filter);
-                    filter.ActivateOptions();
-
-                    var layout = new SyslogLayout()
-                    {
-                        StructuredDataPrefix = "CStarterD@" + domain
-                    };
-                    starterAppender.Layout = layout;
-                    layout.ActivateOptions();
-
-                    starterAppender.ActivateOptions();
+                    ((log4net.Repository.Hierarchy.Logger)logger).RemoveAllAppenders();
+                    ColoredConsoleAppender appender = CreateColoredConsoleAppender(domain);
+                    ((log4net.Repository.Hierarchy.Logger)logger).AddAppender(appender);
+                    (appender.Layout as SyslogLayout).ActivateOptions();
+                    appender.ActivateOptions();
                 }
             }
+            hier.RaiseConfigurationChanged(EventArgs.Empty);
+        }
+
+        static void PrepareRootLoggerLevel(string level)
+        {
+            log4net.Repository.Hierarchy.Hierarchy h = (log4net.Repository.Hierarchy.Hierarchy)log4net.LogManager.GetRepository();
+            log4net.Repository.Hierarchy.Logger rootLogger = h.Root;
+            rootLogger.Level = h.LevelMap[level];
         }
 
         static bool StartDaemons(ServiceStarterSection srvConfig)
@@ -96,12 +166,12 @@ namespace CStarterD
 
             try
             {
-                "启动监听服务".Info();
+                "启动监听服务".Debug();
 
                 CStarterDControlServiceDaemon.Current.Start(srvConfig);
                 CStarterDNotifierServiceDaemon.Current.Start(srvConfig);
 
-                "监听服务已经启动".Info();
+                "监听服务已经启动".Debug();
 
                 retValue = true;
             }
@@ -167,8 +237,9 @@ namespace CStarterD
 
             var srvConfig = (ServiceStarterSection)config.GetSection("serviceStarters");
             ServiceContext.Current.Configuration = srvConfig;
+            ServiceContext.Current.IsDebug = param.IsDebug;
 
-            PrepareLogger(srvConfig.ServiceInfo.Name);
+            PrepareAppender(srvConfig.ServiceInfo.Name, param.IsDebug ? "DEBUG" : "INFO");
 
             if (Environment.UserInteractive)
             {
@@ -200,7 +271,7 @@ namespace CStarterD
                                 monitor.StopMonitor();
 
                                 "程序正在退出，请不要关闭窗口".Info();
-                                string.Format("需要停止 {0} 个服务", ServiceContext.Current.ServiceSlots.Count).Info();
+                                string.Format("需要停止 {0} 个服务", ServiceContext.Current.ServiceSlots.Count).Debug();
 
                                 if (0 != ServiceContext.Current.ServiceSlots.Count)
                                 {
@@ -210,7 +281,7 @@ namespace CStarterD
 
                                     foreach (ServiceSlot slot in slots)
                                     {
-                                        string.Format("正在停止服务：{0}", slot.Name).Info();
+                                        string.Format("正在停止服务：{0}", slot.Name).Debug();
 
                                         (new CStarterClient()).Stop(srvConfig.ServiceInfo.Name, slot.Name, slot.Signal);
 
@@ -231,10 +302,12 @@ namespace CStarterD
                                     }
                                 }
 
-                                "停止监听服务".Info();
+                                "停止监听服务".Debug();
 
                                 CStarterDControlServiceDaemon.Current.Stop();
                                 CStarterDNotifierServiceDaemon.Current.Stop();
+
+                                "服务完全停止".Info();
 
                                 Environment.Exit(0);
                             }

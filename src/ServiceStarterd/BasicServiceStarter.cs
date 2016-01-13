@@ -39,14 +39,15 @@ namespace CStarterD
                 }
 
                 Process p = new Process();
-                p.StartInfo.Arguments = string.Format(" -n={0} -g={1} -c=\"{2}\" -a={3} -t={4} -d={5}", eleConfig.Name, signal, contentFullPath,
-                    eleConfig.AssemblyName, eleConfig.TypeName, domain);
+                p.StartInfo.Arguments = string.Format(" -n={0} -g={1} -c=\"{2}\" -a={3} -t={4} -m={5} -d={6}", eleConfig.Name, signal, contentFullPath,
+                    eleConfig.AssemblyName, eleConfig.TypeName, domain, ServiceContext.Current.IsDebug ? "Y" : "N");
                 p.StartInfo.CreateNoWindow = true;
                 p.StartInfo.FileName = "cstarter.exe";
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
+
                 p.OutputDataReceived += new DataReceivedEventHandler(p_OutputDataReceived);
                 p.ErrorDataReceived += new DataReceivedEventHandler(p_ErrorDataReceived);
 
@@ -58,10 +59,14 @@ namespace CStarterD
 
                 Task t = new Task(() =>
                 {
-                    if (p.HasExited)
+                    while (!token.IsCancellationRequested)
                     {
-                        "服务进程 {0} 已经退出".Formate(eleConfig.Name).Error();
-                        ServiceContext.Current.ServiceStartedComplete();
+                        if (p.HasExited)
+                        {
+                            "服务进程 {0} 已经退出 {1}".Formate(eleConfig.Name, p.ExitCode.ToString()).Error();
+                            ServiceContext.Current.ServiceStartedComplete();
+                            break;
+                        }
                     }
                 }, token.Token);
 
@@ -140,27 +145,48 @@ namespace CStarterD
 
         private static void p_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            e.Data.Info(false);
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                if (e.Data.Contains("EventSeverity=\"ERROR\""))
+                {
+                    e.Data.Error();
+                }
+                else if(e.Data.Contains("EventSeverity=\"WARN\""))
+                {
+                    e.Data.Warn();
+                }
+                else if(e.Data.Contains("EventSeverity=\"DEBUG\""))
+                {
+                    e.Data.Debug();
+                }
+                else
+                {
+                    e.Data.Info();
+                }
+            }
         }
 
         private static void p_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            e.Data.Error(false);
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                e.Data.Error();
+            }
         }
 
         public static void Run(ServiceStarterSection serviceInfo)
         {
             if (null !=serviceInfo)
             {
-                string.Format("服务正在使用 {0} 模式运行。", Environment.UserInteractive ? "交互" : "服务").Info();
+                string.Format("服务正在使用 {0} 模式运行。", Environment.UserInteractive ? "交互" : "服务").Debug();
 
-                string.Format("共配置了：{0} 项服务", serviceInfo.Services.Count).Info();
+                string.Format("共配置了：{0} 项服务", serviceInfo.Services.Count).Debug();
 
-                "解析服务启动顺序".Info();
+                "解析服务启动顺序".Debug();
 
                 List<ServiceStarterElement> orderedConfigs = SortServices(serviceInfo);
 
-                string.Format("服务按照如下顺序启动：{0}", string.Join("=>", (from n in orderedConfigs select n.Name).ToArray())).Info();
+                string.Format("服务按照如下顺序启动：{0}", string.Join("=>", (from n in orderedConfigs select n.Name).ToArray())).Debug();
 
                 try
                 {
@@ -168,7 +194,7 @@ namespace CStarterD
                     {
                         string msg = "";
 
-                        "启动服务 {0} 的进程".Formate(eleConfig.Name).Info();
+                        "启动服务 {0} 的进程".Formate(eleConfig.Name).Debug();
 
                         bool isContinued = true;
 
@@ -176,14 +202,14 @@ namespace CStarterD
                         {
                             string.Format("服务 {0} 依赖服务 {1}", eleConfig.Name, 
                                 string.Join(",", (from refSrv in eleConfig.DependenceServices.Cast<DependenceServiceConfigurationElement>()
-                                                                                               select refSrv.ServiceName).ToArray())).Info();
+                                                                                               select refSrv.ServiceName).ToArray())).Debug();
 
                             foreach(DependenceServiceConfigurationElement dependedOnSrv in eleConfig.DependenceServices)
                             {
-                                "检测依赖服务 {0}".Formate(dependedOnSrv.ServiceName).Info();
+                                "检测依赖服务 {0}".Formate(dependedOnSrv.ServiceName).Debug();
                                 if (null == ServiceContext.Current.ServiceSlots.FirstOrDefault(s => s.Name == dependedOnSrv.ServiceName))
                                 {
-                                    "依赖服务 {0} 未启动，服务启动失败".Formate(dependedOnSrv.ServiceName).Error();
+                                    "{0} 所依赖的服务 {1} 未启动，服务启动失败".Formate(eleConfig.Name, dependedOnSrv.ServiceName).Error();
                                     isContinued = false;
                                     break;
                                 }
@@ -199,7 +225,7 @@ namespace CStarterD
                         }
                     }
 
-                    "服务启动完毕".Info();
+                    "服务启动完毕".Debug();
                 }
                 catch (Exception eX)
                 {

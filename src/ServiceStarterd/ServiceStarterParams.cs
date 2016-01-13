@@ -14,13 +14,21 @@ namespace CStarterD
 
         public bool IsShowHelp { get; private set; }
 
+        public bool IsDebug { get; private set; }
+
         public OptionSet Options { get; private set; }
+
+        public ServiceStarterParams()
+        {
+            IsDebug = false;
+        }
 
         public List<string> Parse(string[] args)
         {
             Options = new OptionSet(){
-                { "v|version", "显示版本号", v => IsShowVersion = true},
+                { "v|version", "显示版本号", v => IsShowVersion = true },
                 { "c|config=", "使用指定的配置文件", v => { ConfigurationFileName = v;} },
+                { "d|debug=", "Debug模式(Y/N)，默认是N", v => IsDebug = "Y" == v.ToUpper() },
                 { "h|help", "显示帮助", v=>IsShowHelp=true}
             };
 

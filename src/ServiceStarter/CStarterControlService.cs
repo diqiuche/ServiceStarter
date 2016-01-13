@@ -67,12 +67,12 @@ namespace CStarter
         {
             try
             {
-                "初始化通讯服务对象".Info();
+                "初始化通讯服务对象".Debug();
 
                 _Srv = new CStarterController();
 
-                "初始化通讯服务配置".Info();
-                string.Format("通讯服务监听地址：net.pipe://localhost/{0}/{1}/comm", ServiceContext.Current.Domain, ServiceContext.Current.Name).Info();
+                "初始化通讯服务配置".Debug();
+                string.Format("通讯服务监听地址：net.pipe://localhost/{0}/{1}/comm", ServiceContext.Current.Domain, ServiceContext.Current.Name).Debug();
 
                 _Host = new ServiceHost(_Srv, new Uri(
                     string.Format("net.pipe://localhost/{0}/{1}", 
@@ -80,7 +80,7 @@ namespace CStarter
                     ServiceContext.Current.Name)));
                 _Host.AddServiceEndpoint(typeof(ICStarterControl), new NetNamedPipeBinding(), "comm");
 
-                "开启监听服务".Info();
+                "开启监听服务".Debug();
 
                 _Host.Open();
 

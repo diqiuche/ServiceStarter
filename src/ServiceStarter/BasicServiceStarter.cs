@@ -42,11 +42,11 @@ namespace CStarter
                 oSetup.ConfigurationFile = Path.Combine(oSetup.ApplicationBase, ServiceContext.Current.AssemblyName + ".dll.config");
                 oSetup.PrivateBinPath = oSetup.ApplicationBase;
 
-                string.Format("基础路径：{0}", oSetup.ApplicationBase).Info();
-                string.Format("BIN路径：{0}", oSetup.PrivateBinPath).Info();
-                string.Format("镜像路径：{0}", oSetup.ShadowCopyDirectories).Info();
-                string.Format("缓存路径：{0}", oSetup.CachePath).Info();
-                string.Format("配置文件：{0}", oSetup.ConfigurationFile).Info();
+                string.Format("基础路径：{0}", oSetup.ApplicationBase).Debug();
+                string.Format("BIN路径：{0}", oSetup.PrivateBinPath).Debug();
+                string.Format("镜像路径：{0}", oSetup.ShadowCopyDirectories).Debug();
+                string.Format("缓存路径：{0}", oSetup.CachePath).Debug();
+                string.Format("配置文件：{0}", oSetup.ConfigurationFile).Debug();
 
                 AppDomain newDomain = AppDomain.CreateDomain(ServiceContext.Current.Name,
                     AppDomain.CurrentDomain.Evidence,
@@ -83,7 +83,7 @@ namespace CStarter
                 string.Format("启动服务 {0} 的实例： {1}",
                     ServiceContext.Current.Name,
                     ServiceContext.Current.TargetType)
-                    .Info();
+                    .Debug();
 
                 IService service = ServiceContext.Current.ServiceDomain.CreateInstanceAndUnwrap(ServiceContext.Current.AssemblyName,
                     ServiceContext.Current.TargetType) as IService;
@@ -108,12 +108,12 @@ namespace CStarter
 
         private static void p_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            e.Data.Info(false);
+            e.Data.Info();
         }
 
         private static void p_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            e.Data.Error(false);
+            e.Data.Error();
         }
     }
 }

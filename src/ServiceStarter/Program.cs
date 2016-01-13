@@ -15,71 +15,144 @@ using log4net.Appender;
 using syslog4net.Filter;
 using syslog4net.Layout;
 using System.Security.AccessControl;
+using log4net.Core;
+using log4net.Filter;
+using log4net.Repository;
+using System.Reflection;
 
 namespace CStarter
 {
     class Program
     {
-        static void PrepareLogger(string serviceName)
+        static ColoredConsoleAppender CreateColoredConsoleAppender(string serviceName)
         {
-            Hierarchy hier = log4net.LogManager.GetRepository() as Hierarchy;
-
-            string logRootFullName = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new char[] { '\\' })).FullName,
-                "logs", "CStarter");
-
-            if (null != hier)
+            ColoredConsoleAppender retValue = new ColoredConsoleAppender();
+            
+            retValue.Layout = new SyslogLayout()
             {
-                RollingFileAppender commonAppender = (RollingFileAppender)hier.GetAppenders().Where(a => a.Name.Equals("CommonAppender")).FirstOrDefault();
+                StructuredDataPrefix = "CStarter@" + serviceName
+            };
 
-                if (null != commonAppender)
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Debug,
+                BackColor = ColoredConsoleAppender.Colors.White,
+                ForeColor = ColoredConsoleAppender.Colors.Green
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Info,
+                BackColor = ColoredConsoleAppender.Colors.Green,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Warn,
+                BackColor = ColoredConsoleAppender.Colors.Cyan,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+            retValue.AddMapping(new ColoredConsoleAppender.LevelColors()
+            {
+                Level = Level.Error,
+                BackColor = ColoredConsoleAppender.Colors.Red,
+                ForeColor = ColoredConsoleAppender.Colors.White
+            });
+
+            //retValue.Target = "Console.Error";
+
+            return retValue;
+        }
+
+        static void PrepareLoggerLevel(ILoggerRepository repository, string domain, string level)
+        {
+            repository.Threshold = repository.LevelMap[level];
+            log4net.Repository.Hierarchy.Hierarchy hier = (log4net.Repository.Hierarchy.Hierarchy)repository;
+            log4net.Core.ILogger[] loggers = hier.GetCurrentLoggers();
+            foreach (log4net.Core.ILogger logger in loggers)
+            {
+                Console.WriteLine(logger.Name);
+
+                ((log4net.Repository.Hierarchy.Logger)logger).Level = hier.LevelMap[level];
+
+                if (Environment.UserInteractive)
                 {
-                    commonAppender.File = Path.Combine(logRootFullName, "Common", "logs.txt");
-
-                    var filter = new LogExceptionToFileFilter()
-                    {
-                        ExceptionLogFolder = Path.Combine(logRootFullName, "Common", "Exceptions")
-                    };
-                    commonAppender.AddFilter(filter);
-                    filter.ActivateOptions();
-
-                    var layout = new SyslogLayout()
-                    {
-                        StructuredDataPrefix = "CStarter@" + serviceName
-                    };
-                    commonAppender.Layout = layout;
-                    layout.ActivateOptions();
-
-                    commonAppender.ActivateOptions();
-                }
-
-                RollingFileAppender starterAppender = (RollingFileAppender)hier.GetAppenders().Where(a => a.Name.Equals("StarterAppender")).FirstOrDefault();
-
-                if (null != starterAppender)
-                {
-                    starterAppender.File = Path.Combine(logRootFullName, "CStarter", "logs.txt");
-
-                    var filter = new LogExceptionToFileFilter()
-                    {
-                        ExceptionLogFolder = Path.Combine(logRootFullName, "CStarter", "Exceptions")
-                    };
-                    starterAppender.AddFilter(filter);
-                    filter.ActivateOptions();
-
-                    var layout = new SyslogLayout()
-                    {
-                        StructuredDataPrefix = "CStarter@" + serviceName
-                    };
-                    starterAppender.Layout = layout;
-                    layout.ActivateOptions();
-
-                    starterAppender.ActivateOptions();
+                    ((log4net.Repository.Hierarchy.Logger)logger).RemoveAllAppenders();
+                    ColoredConsoleAppender appender = CreateColoredConsoleAppender(domain);
+                    ((log4net.Repository.Hierarchy.Logger)logger).AddAppender(appender);
+                    (appender.Layout as SyslogLayout).ActivateOptions();
+                    appender.ActivateOptions();
                 }
             }
+            hier.RaiseConfigurationChanged(EventArgs.Empty);
+        }
+
+        static void PrepareRootLoggerLevel(string level)
+        {
+            log4net.Repository.Hierarchy.Hierarchy h = (log4net.Repository.Hierarchy.Hierarchy)log4net.LogManager.GetRepository();
+            log4net.Repository.Hierarchy.Logger rootLogger = h.Root;
+            rootLogger.Level = h.LevelMap[level];
+        }
+
+        static void PrepareAppender(string serviceName, string minLevel)
+        {
+            string logRootFullName = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new char[] { '\\' })).FullName,
+                "logs", "CStarterd");
+
+            foreach (ILoggerRepository respository in log4net.LogManager.GetAllRepositories())
+            {
+                Hierarchy hier = (Hierarchy)respository;
+
+                foreach (var appender in hier.GetAppenders())
+                {
+                    MethodInfo addFilterMethod = appender.GetType().GetMethod("AddFilter", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != addFilterMethod)
+                    {
+                        var filter = new LogExceptionToFileFilter()
+                        {
+                            ExceptionLogFolder = Path.Combine(logRootFullName, appender.Name, "Exceptions")
+                        };
+                        addFilterMethod.Invoke(appender, new object[] { filter });
+                        filter.ActivateOptions();
+                    }
+
+                    PropertyInfo fileProp = appender.GetType().GetProperty("File", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != fileProp)
+                    {
+                        fileProp.SetValue(appender, Path.Combine(logRootFullName, appender.Name, "logs.txt"), null);
+                    }
+
+                    PropertyInfo layoutProp = appender.GetType().GetProperty("Layout", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != layoutProp)
+                    {
+                        var layout = new SyslogLayout()
+                        {
+                            StructuredDataPrefix = "CStarter@" + serviceName
+                        };
+
+                        layoutProp.SetValue(appender,
+                            layout, null);
+
+                        layout.ActivateOptions();
+                    }
+
+                    MethodInfo activeMethod = appender.GetType().GetMethod("ActivateOptions", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (null != activeMethod)
+                        activeMethod.Invoke(appender, null);
+                }
+
+                PrepareLoggerLevel(respository, serviceName, minLevel);
+            }
+
+            PrepareRootLoggerLevel(minLevel);
         }
 
         static void Version()
         {
-            "服务进程启动程序，版本号：1.0".Info(false);
+            "服务进程启动程序，版本号：1.0".Info();
         }
 
         static int CheckParams()
@@ -116,13 +189,16 @@ namespace CStarter
 
             log4net.Config.XmlConfigurator.Configure();
 
+            bool isDebug = false;
+
             var p = new OptionSet(){
                 { "n|name=", "服务名称", v => ServiceContext.Current.Name = v },
-                { "d|domain=", "服务域名称", v => ServiceContext.Current.Domain = v },
+                { "m|domain=", "服务域名称", v => ServiceContext.Current.Domain = v },
                 { "g|signal=", "进程通讯的信号量", v => ServiceContext.Current.Signal = v },
                 { "c|contentpath=", "运行路径", v => ServiceContext.Current.ContentPath = v },
                 { "a|assemlyname=", "要运行的组件名称（不包含后缀）", v => { ServiceContext.Current.AssemblyName = v; } },
                 { "t|type=", "要运行的类全名", v => { ServiceContext.Current.TargetType = v; } },
+                { "d|debug=", "Debug模式(Y/N)，默认是N", v => isDebug = "Y" == v.ToUpper() },
                 { "v|version=", "显示版本号", v => { } },
                 { "h|help", "显示帮助", v => { } }
             };
@@ -184,7 +260,7 @@ namespace CStarter
             }
             else
             {
-                PrepareLogger(ServiceContext.Current.Name);
+                PrepareAppender(ServiceContext.Current.Name, isDebug ? "DEBUG" : "INFO");
 
                 bool isStarted = false;
 
@@ -270,8 +346,8 @@ namespace CStarter
 
         static void ShowHelp(OptionSet p)
         {
-            "用法：cstarter [Options]+".Info(false);
-            "对服务做出相应的操作指令".Info(false);
+            "用法：cstarter [Options]+".Info();
+            "对服务做出相应的操作指令".Info();
 
             p.WriteOptionDescriptions(Console.Out);
         }

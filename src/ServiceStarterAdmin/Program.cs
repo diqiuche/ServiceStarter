@@ -20,13 +20,13 @@ namespace CStarterAdmin
 
         static void Version()
         {
-            "服务启动通用程序，版本号：1.0".Info(false);
+            "服务启动通用程序，版本号：1.0".Info();
         }
 
         static void ShowHelp(OptionSet p)
         {
-            "用法：CStarterAdmin [Options]+".Info(false);
-            "对服务做出相应的操作指令".Info(false);
+            "用法：CStarterAdmin [Options]+".Info();
+            "对服务做出相应的操作指令".Info();
 
             p.WriteOptionDescriptions(Console.Out);
         }
@@ -140,13 +140,13 @@ namespace CStarterAdmin
                 {
                     string names = (new CStarterDControlClient()).GetServices(_SrcConfig);
 
-                    names.Info(false);
+                    names.Info();
                 }
                 else if (isShowServiceInfo)
                 {
                     string info = (new CStarterDControlClient()).GetServiceInfo(_SrcConfig, targetService);
 
-                    info.Info(false);
+                    info.Info();
                 }
                 else if (isStop)
                 {
